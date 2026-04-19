@@ -135,7 +135,7 @@ int main(int argc, char **argv)
         {"non-interactive", no_argument, nullptr, 'n'},
         {"libtas-so-path", required_argument, nullptr, 'p'},
         {"libtas32-so-path", required_argument, nullptr, 'P'},
-        {"cmdline-prefix", required_argument, nullptr, 'c'},
+        {"cmdline-prefix", required_argument, nullptr, 'C'},
         {"help", no_argument, nullptr, 'h'},
         {"input-editor", no_argument, nullptr, 'i'},
         {nullptr, 0, nullptr, 0}
@@ -144,7 +144,7 @@ int main(int argc, char **argv)
     bool openInputEditor = false;
 
     // std::string libname;
-    while ((c = getopt_long (argc, argv, "+r:w:d:l:nhi", long_options, &option_index)) != -1) {
+    while ((c = getopt_long (argc, argv, "+r:w:d:l:nhiC:", long_options, &option_index)) != -1) {
         switch (c) {
             case 'r':
             case 'w':
