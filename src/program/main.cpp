@@ -99,6 +99,8 @@ static void print_usage(void)
     std::cout << "  -p, --libtas-so-path    Path to libtas.so (equivalent to setting LIBTAS_SO_PATH)" << std::endl;
     std::cout << "  -P, --libtas32-so-path  Path to libtas32.so (equivalent to setting LIBTAS32_SO_PATH)" << std::endl;
     std::cout << "  -C, --cmdline-prefix    Prefix to place before the command before running the game (equivalent to setting CMDLINE_PREFIX)" << std::endl;
+    std::cout << "  -e, --env KEY=VALUE     Set an environment variable for the game (can be used multiple times)" << std::endl;
+    std::cout << "  -E, --env-file FILE     Load environment variables from a .env file" << std::endl;
     std::cout << "  -i, --input-editor      Open Input Editor window at startup" << std::endl;
     std::cout << "  -h, --help              Show this message" << std::endl;
 }
@@ -136,6 +138,8 @@ int main(int argc, char **argv)
         {"libtas-so-path", required_argument, nullptr, 'p'},
         {"libtas32-so-path", required_argument, nullptr, 'P'},
         {"cmdline-prefix", required_argument, nullptr, 'C'},
+        {"env", required_argument, nullptr, 'e'},
+        {"env-file", required_argument, nullptr, 'E'},
         {"help", no_argument, nullptr, 'h'},
         {"input-editor", no_argument, nullptr, 'i'},
         {nullptr, 0, nullptr, 0}
@@ -144,7 +148,7 @@ int main(int argc, char **argv)
     bool openInputEditor = false;
 
     // std::string libname;
-    while ((c = getopt_long (argc, argv, "+r:w:d:l:nhiC:", long_options, &option_index)) != -1) {
+    while ((c = getopt_long (argc, argv, "+r:w:d:l:nhiC:e:E:", long_options, &option_index)) != -1) {
         switch (c) {
             case 'r':
             case 'w':
@@ -182,6 +186,33 @@ int main(int argc, char **argv)
             case 'C':
                 context.commandline_prefix = optarg;
                 break;
+            case 'e': {
+                std::string kv = optarg;
+                auto eq = kv.find('=');
+                if (eq == std::string::npos) {
+                    std::cerr << "--env: expected KEY=VALUE, got: " << kv << std::endl;
+                    return -1;
+                }
+                context.extra_env.emplace_back(kv.substr(0, eq), kv.substr(eq + 1));
+                break;
+            }
+            case 'E': {
+                std::ifstream envfile(optarg);
+                if (!envfile) {
+                    std::cerr << "--env-file: cannot open " << optarg << std::endl;
+                    return -1;
+                }
+                std::string line;
+                while (std::getline(envfile, line)) {
+                    if (line.empty() || line[0] == '#')
+                        continue;
+                    auto eq = line.find('=');
+                    if (eq == std::string::npos)
+                        continue;
+                    context.extra_env.emplace_back(line.substr(0, eq), line.substr(eq + 1));
+                }
+                break;
+            }
             case '?':
                 std::cout << "Unknown option character" << std::endl;
                 break;

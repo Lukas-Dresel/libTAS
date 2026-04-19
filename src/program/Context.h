@@ -31,6 +31,7 @@
 #include <string>
 #include <stdint.h>
 #include <filesystem>
+#include <vector>
 
 struct Context {
     /* Execution status */
@@ -87,6 +88,9 @@ struct Context {
     Config config;
 
     std::string commandline_prefix;
+
+    /* Extra environment variables to inject into the game process */
+    std::vector<std::pair<std::string, std::string>> extra_env;
 
     /* Absolute path of libtas.so */
     std::filesystem::path libtaspath;

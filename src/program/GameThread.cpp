@@ -82,6 +82,13 @@ void GameThread::set_env_variables(Context *context, int gameArch)
     /* Disable Wayland support */
     setenv("WAYLAND_DISPLAY", "", 1);
 
+    /* Apply user-supplied extra environment variables (LD_PRELOAD handled separately in launch()) */
+    for (const auto& [key, val] : context->extra_env) {
+        if (key == "LD_PRELOAD" || key == "DYLD_INSERT_LIBRARIES")
+            continue;
+        setenv(key.c_str(), val.c_str(), 1);
+    }
+
     /* Pass libtas library path to the game */
     setenv("LIBTAS_LIBRARY_PATH", context->libtaspath.c_str(), 1);
 
@@ -319,12 +326,19 @@ void GameThread::launch(Context *context)
 #elif defined(__APPLE__) && defined(__MACH__)
         sharg << "DYLD_INSERT_LIBRARIES=";
 #endif
+        sharg << context->libtaspath;
+        for (const auto& [key, val] : context->extra_env) {
+#ifdef __unix__
+            if (key == "LD_PRELOAD")
+#elif defined(__APPLE__) && defined(__MACH__)
+            if (key == "DYLD_INSERT_LIBRARIES")
+#endif
+                sharg << ":" << val;
+        }
         if (!context->old_ld_preload.empty()) {
-            sharg << context->libtaspath << ":" << context->old_ld_preload << " ";
+            sharg << ":" << context->old_ld_preload;
         }
-        else {
-            sharg << context->libtaspath << " ";
-        }
+        sharg << " ";
         
         /* We need to set DYLD_FORCE_FLAT_NAMESPACE so that we can hook into the game */
 #if defined(__APPLE__) && defined(__MACH__)
