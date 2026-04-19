@@ -332,6 +332,10 @@ void GameThread::launch(Context *context)
 #endif
     }
 
+    /* Prepend optional command-line prefix (e.g. run_bepinex.sh) */
+    if (!context->commandline_prefix.empty())
+        sharg << context->commandline_prefix << " ";
+
     /* Escape and concatenate arguments */
     for (std::string arg : arg_list) {
         /* Replace all occurrences of `'` with `'\'''` */

@@ -96,8 +96,9 @@ static void print_usage(void)
     std::cout << "  -w, --write MOVIE       Record game inputs into the specified MOVIE file" << std::endl;
     std::cout << "  -l, --lua FILE          Start the specified FILE lua scripts (comma-separated list). Can be used several times" << std::endl;
     std::cout << "  -n, --non-interactive   Don't offer any interactive choice, so that it can run headless" << std::endl;
-    std::cout << "      --libtas-so-path    Path to libtas.so (equivalent to setting LIBTAS_SO_PATH)" << std::endl;
-    std::cout << "      --libtas32-so-path  Path to libtas32.so (equivalent to setting LIBTAS32_SO_PATH)" << std::endl;
+    std::cout << "  -p, --libtas-so-path    Path to libtas.so (equivalent to setting LIBTAS_SO_PATH)" << std::endl;
+    std::cout << "  -P, --libtas32-so-path  Path to libtas32.so (equivalent to setting LIBTAS32_SO_PATH)" << std::endl;
+    std::cout << "  -C, --cmdline-prefix    Prefix to place before the command before running the game (equivalent to setting CMDLINE_PREFIX)" << std::endl;
     std::cout << "  -i, --input-editor      Open Input Editor window at startup" << std::endl;
     std::cout << "  -h, --help              Show this message" << std::endl;
 }
@@ -134,6 +135,7 @@ int main(int argc, char **argv)
         {"non-interactive", no_argument, nullptr, 'n'},
         {"libtas-so-path", required_argument, nullptr, 'p'},
         {"libtas32-so-path", required_argument, nullptr, 'P'},
+        {"cmdline-prefix", required_argument, nullptr, 'c'},
         {"help", no_argument, nullptr, 'h'},
         {"input-editor", no_argument, nullptr, 'i'},
         {nullptr, 0, nullptr, 0}
@@ -176,6 +178,9 @@ int main(int argc, char **argv)
                 break;
             case 'P':
                 context.libtas32path = std::filesystem::weakly_canonical(optarg);
+                break;
+            case 'C':
+                context.commandline_prefix = optarg;
                 break;
             case '?':
                 std::cout << "Unknown option character" << std::endl;
@@ -255,7 +260,7 @@ int main(int argc, char **argv)
         if (cap) {
             cap_value_t cap_list[1] = {CAP_CHECKPOINT_RESTORE};
             cap_set_flag(cap, CAP_INHERITABLE, 1, cap_list, CAP_SET);
-            
+
             int ret = cap_set_proc(cap);
             if (ret == -1) {
                 std::cerr << "Setting CAP_CHECKPOINT_RESTORE capability to libTAS will allow some optimizations during savestates." << std::endl;
@@ -270,7 +275,7 @@ int main(int argc, char **argv)
             cap_free(cap);
         }
     }
-    
+
 #ifdef __x86_64__
     /* Detect if clone3 with set tid is supported.
      * Taken from criu <https://criu.org/> source code */
@@ -318,7 +323,7 @@ int main(int argc, char **argv)
             lseek(fd, 0, SEEK_SET);
             size = write(fd, last_pid, size);
             if (size == -1) {
-                context.config.sc.can_set_last_pid = false;            
+                context.config.sc.can_set_last_pid = false;
             }
             else {
                 context.config.sc.can_set_last_pid = true;
@@ -326,7 +331,7 @@ int main(int argc, char **argv)
         }
         close(fd);
     }
-    
+
     /* libtas.so path */
     /* TODO: Not portable! */
     if (context.libtaspath.empty()) {
@@ -369,7 +374,7 @@ int main(int argc, char **argv)
         context.config.configdir /= ".config";
     }
     context.config.configdir /= "libTAS";
-    
+
     try {
         std::filesystem::create_directory(context.config.configdir);
     }
@@ -396,7 +401,7 @@ int main(int argc, char **argv)
         context.config.dumpfile = dumpfile;
         context.config.dumping = true;
     }
-    
+
     MemScanner::init(context.config.ramsearchdir);
 
     /* Store current content of LD_PRELOAD/DYLD_INSERT_LIBRARIES */

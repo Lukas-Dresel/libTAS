@@ -86,6 +86,8 @@ struct Context {
     /* config */
     Config config;
 
+    std::string commandline_prefix;
+
     /* Absolute path of libtas.so */
     std::filesystem::path libtaspath;
 
@@ -137,13 +139,13 @@ struct Context {
 
     /* Interactive mode */
     bool interactive = true;
-    
+
     /* Indicate if the current frame is a draw frame */
     bool draw_frame;
-    
+
     /* PID of the appimage process that mounts the appimage structure */
     pid_t appimage_pid = 0;
-    
+
     /* Detected game engine */
     int engine;
 };
